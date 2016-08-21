@@ -75,4 +75,9 @@ cola= simpy.Resource(env,capacity=1)
 
 # Se inicia el proceso y se corre
 
-
+for j in range(NUMERO_PROCESOS):
+    tiempo_proceso = random.expovariate(1.0/10)
+    num_inst = random.randint(INST_MIN,INST_MAX)
+    cantidad_memoria = random.randint(MEM_MIN,MEM_MAX)
+    env.process(proceso(env,cantidad_memoria,tiempo_proceso,num_inst,waiting))
+env.run()
