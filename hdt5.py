@@ -18,36 +18,40 @@ MEM_MAX = 10
 INST_MIN = 1
 INST_MAX = 10
 NUMERO_INSTRUCCIONES = 3
-NUMERO_PROCESOS=25
-
-
-def proceso(env,cantidad_memoria,tiempo_proceso,num_inst,waiting):
-
+NUMERO_PROCESOS=10
+I_C = 0
+limite=3
+def proceso(env,cantidad_memoria,tiempo_proceso,num_inst,waiting,instrucciones_completas,limite):
     ## ---- new ---- ##
     inicio_proceso = env.now
+    print inicio_proceso
     yield env.timeout(tiempo_proceso)
+    print "tiempo_proceso=",tiempo_proceso
+    print "cantidad_memoria=",cantidad_memoria
+    print ''
     yield MEMORIA_RAM.get(cantidad_memoria)
+    print "nivel de la memoria=",MEMORIA_RAM.level
     print'Se admitio el proceso'
     print'con un tiempo de:%f'% env.now
-    print'con una cantidad de memoria de:%f'% cantidad_memoria
-
+    print'con una cantidad de memoria de:%i'% cantidad_memoria
+    print ''
     ## ---- ready ----##
     for i in range(num_inst):
         with CPU.request() as req:
             yield req
-            if (cantidad_instrucciones-instrucciones_completas)>=limite:
+            if (num_inst-instrucciones_completas)>=limite:
                 realizar=limite
             else:
-                realizar=cantidad_instrucciones-instrucciones_completas
-            env.timeou(realizar/limite)
+                realizar=num_inst-instrucciones_completas
+            env.timeout(realizar/limite)
             instrucciones_completas=instrucciones_completas+realizar
             print'Esta listo(ready)'
             print'Instrucciones completadas:%f'%instrucciones_completas
             print'Tiempo:%f'%env.now
-            
+            print ''
         W=waiting
         
-        if W==1 and instrucciones_completas<cantidad_instrucciones:
+        if W==1 and instrucciones_completas<num_inst:
 
             with cola.request() as reqq:
                 yield reqq
@@ -55,29 +59,28 @@ def proceso(env,cantidad_memoria,tiempo_proceso,num_inst,waiting):
                 t_I_O=env.now()
                 print'Operaciones i/O'
                 print'tiempo de operaciones:%f'% t_I_O
-
+                print ''
     ##---- exit ----##
     tiempo_total = env.now - inicio_proceso
     yield MEMORIA_RAM.put(cantidad_memoria)
     print "Tiempo del proceso:%f"% tiempo_total
     print 'memoria total:%f'%cantidad_memoria
     print 'FINAL DEL PROCESO.'
-
+    print ''
 
 
 # Se inicia la simulacion
 waiting = random.randint(1,2)
 random.seed(SEMILLA)
 env = simpy.Environment()
-MEMORIA_RAM = simpy.Container(env, init=0, capacity=CANT_MEMORIA_RAM)
+MEMORIA_RAM = simpy.Container(env, init=100, capacity=CANT_MEMORIA_RAM)
 CPU = simpy.Resource(env,capacity=1)
 cola= simpy.Resource(env,capacity=1)
-
 # Se inicia el proceso y se corre
-
-for j in range(NUMERO_PROCESOS):
+for i in range(NUMERO_PROCESOS):
     tiempo_proceso = random.expovariate(1.0/10)
     num_inst = random.randint(INST_MIN,INST_MAX)
     cantidad_memoria = random.randint(MEM_MIN,MEM_MAX)
-    env.process(proceso(env,cantidad_memoria,tiempo_proceso,num_inst,waiting))
-env.run()
+    env.process(proceso(env,cantidad_memoria,tiempo_proceso,num_inst,waiting,I_C,limite))
+    env.run()
+
