@@ -3,7 +3,7 @@
 #           Laboratorio 5           #
 #                                   #
 # @utores: Gerardo Molina, 14492    #
-#          Rodolfo Cacacho          #
+#          Rodolfo Cacacho,15223    #
 # Fecha: 22/09/16                   #
 #-----------------------------------#
 
@@ -13,14 +13,13 @@ import simpy
 
 SEMILLA = 50
 CANT_MEMORIA_RAM=100
-MEMORIA_RAM = simpy.Container(env, init=0, capacity=CANT_MEMORIA_RAM)
 MEM_MIN = 1
 MEM_MAX = 10
 INST_MIN = 1
 INST_MAX = 10
 NUMERO_INSTRUCCIONES = 3
 NUMERO_PROCESOS=25
-INTERVAL_CUSTOMERS=10
+
 
 def proceso(env,cantidad_memoria,tiempo_proceso,num_inst,waiting):
 
@@ -34,7 +33,7 @@ def proceso(env,cantidad_memoria,tiempo_proceso,num_inst,waiting):
 
     ## ---- ready ----##
     for i in range(num_inst):
-        CPU.request() as req:
+        with CPU.request() as req:
             yield req
             if (cantidad_instrucciones-instrucciones_completas)>=limite:
                 realizar=limite
@@ -50,12 +49,12 @@ def proceso(env,cantidad_memoria,tiempo_proceso,num_inst,waiting):
         
         if W==1 and instrucciones_completas<cantidad_instrucciones:
 
-        with cola.request() as reqq:
-            yield reqq
-            yield env.timeout(1)
-            t_I_O=env.now()
-            print'Operaciones i/O'
-            print'tiempo de operaciones:%f'% t_I_O
+            with cola.request() as reqq:
+                yield reqq
+                yield env.timeout(1)
+                t_I_O=env.now()
+                print'Operaciones i/O'
+                print'tiempo de operaciones:%f'% t_I_O
 
     ##---- exit ----##
     tiempo_total = env.now - inicio_proceso
@@ -70,10 +69,10 @@ def proceso(env,cantidad_memoria,tiempo_proceso,num_inst,waiting):
 waiting = random.randint(1,2)
 random.seed(SEMILLA)
 env = simpy.Environment()
-inst=simpy.Resource(env,capacity=3)
+MEMORIA_RAM = simpy.Container(env, init=0, capacity=CANT_MEMORIA_RAM)
+CPU = simpy.Resource(env,capacity=1)
+cola= simpy.Resource(env,capacity=1)
 
 # Se inicia el proceso y se corre
-counter = simpy.Resource(env, capacity=1)
-ourGen=generador(NUMERO_PROCESOS)
-#env.process(proceso(env))
-#env.run()
+
+
