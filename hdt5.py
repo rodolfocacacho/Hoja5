@@ -36,7 +36,8 @@ def proceso(env,cantidad_memoria,tiempo_proceso,num_inst,waiting,instrucciones_c
     print'con una cantidad de memoria de:%i'% cantidad_memoria
     print ''
     ## ---- ready ----##
-    for i in range(num_inst):
+    #for i in range(num_inst):
+    while instrucciones_completas<num_inst:
         with CPU.request() as req:
             yield req
             if (num_inst-instrucciones_completas)>=limite:
@@ -83,4 +84,3 @@ for i in range(NUMERO_PROCESOS):
     cantidad_memoria = random.randint(MEM_MIN,MEM_MAX)
     env.process(proceso(env,cantidad_memoria,tiempo_proceso,num_inst,waiting,I_C,limite))
     env.run()
-
