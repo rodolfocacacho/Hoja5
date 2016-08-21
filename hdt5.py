@@ -18,26 +18,26 @@ MEM_MAX = 10
 INST_MIN = 1
 INST_MAX = 10
 NUMERO_INSTRUCCIONES = 3
-NUMERO_PROCESOS=10
+NUMERO_PROCESOS=2
 I_C = 0
 limite=3
 def proceso(env,cantidad_memoria,tiempo_proceso,num_inst,waiting,instrucciones_completas,limite):
+
     ## ---- new ---- ##
     inicio_proceso = env.now
-    print inicio_proceso
     yield env.timeout(tiempo_proceso)
     print "tiempo_proceso=",tiempo_proceso
-    print "cantidad_memoria=",cantidad_memoria
-    print ''
+    print "Memoria requerida:",cantidad_memoria
     yield MEMORIA_RAM.get(cantidad_memoria)
     print "nivel de la memoria=",MEMORIA_RAM.level
     print'Se admitio el proceso'
     print'con un tiempo de:%f'% env.now
-    print'con una cantidad de memoria de:%i'% cantidad_memoria
-    print ''
+    print'con una cantidad de memoria de:%f'% cantidad_memoria
+    print''
+    print''
     ## ---- ready ----##
-    #for i in range(num_inst):
     while instrucciones_completas<num_inst:
+    #for i in range(num_inst):
         with CPU.request() as req:
             yield req
             if (num_inst-instrucciones_completas)>=limite:
@@ -49,7 +49,8 @@ def proceso(env,cantidad_memoria,tiempo_proceso,num_inst,waiting,instrucciones_c
             print'Esta listo(ready)'
             print'Instrucciones completadas:%f'%instrucciones_completas
             print'Tiempo:%f'%env.now
-            print ''
+            print''
+            print''
         W=waiting
         
         if W==1 and instrucciones_completas<num_inst:
@@ -60,14 +61,18 @@ def proceso(env,cantidad_memoria,tiempo_proceso,num_inst,waiting,instrucciones_c
                 t_I_O=env.now()
                 print'Operaciones i/O'
                 print'tiempo de operaciones:%f'% t_I_O
-                print ''
+                print''
+                print''
     ##---- exit ----##
     tiempo_total = env.now - inicio_proceso
     yield MEMORIA_RAM.put(cantidad_memoria)
     print "Tiempo del proceso:%f"% tiempo_total
     print 'memoria total:%f'%cantidad_memoria
     print 'FINAL DEL PROCESO.'
-    print ''
+    print''
+    print''
+    print''
+    print''
 
 
 # Se inicia la simulacion
@@ -84,3 +89,4 @@ for i in range(NUMERO_PROCESOS):
     cantidad_memoria = random.randint(MEM_MIN,MEM_MAX)
     env.process(proceso(env,cantidad_memoria,tiempo_proceso,num_inst,waiting,I_C,limite))
     env.run()
+
