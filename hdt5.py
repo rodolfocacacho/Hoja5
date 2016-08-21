@@ -44,3 +44,4 @@ inst=simpy.Resource(env,capacity=3)
 counter = simpy.Resource(env, capacity=1)
 env.process(source(env, NUMERO_PROCESOS, INTERVAL_CUSTOMERS, counter))
 env.run()
+
