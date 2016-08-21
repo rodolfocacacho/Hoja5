@@ -2,7 +2,7 @@
 #           Laboratorio 5           #
 #                                   #
 # @utores: Gerardo Molina, 14492    #
-#          Rodolfo Cacacho          #
+#          Rodolfo Cacacho 15223    #
 # Fecha: 22/09/16                   #
 #-----------------------------------#
 
