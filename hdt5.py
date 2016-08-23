@@ -1,4 +1,3 @@
-
 #-----------------------------------#
 #           Laboratorio 5           #
 #                                   #
@@ -10,83 +9,96 @@
 import random
 import simpy
 
+global tiempoT
+tiempoT = []
+Random_Seed = 111               # Seed to generate random
+random.seed(Random_Seed)
+Ram_Size = 100                # Size of ram
+CPU_Speed = 1                 # Tiempo que atiende proceso
+InstCPU = 6       # Cantidad de instrucciones que puede hacer el cpu por unidad de tiempo
+Intervalo = 5       # Valor de intervalo paa random expovariate
+Procesos = 25        # Cantidad de procesos a realizar
 
-SEMILLA = 50
-CANT_MEMORIA_RAM=100
-MEM_MIN = 1
-MEM_MAX = 10
-INST_MIN = 1
-INST_MAX = 10
-NUMERO_INSTRUCCIONES = 3
-NUMERO_PROCESOS=2
-I_C = 0
-limite=3
-def proceso(env,cantidad_memoria,tiempo_proceso,num_inst,waiting,instrucciones_completas,limite):
+def genProcess(env, cant_Procesos, intervalo_Gen, instdCPU):
+   global instruct
+   for i in range(Procesos):
+      var = random.expovariate(1.0/intervalo_Gen)
+      cantM = random.randint(1, 10)
+      cantI = random.randint(1, 10)
+      env.process(setMem(env,i+1,cantM))
+      global arribo
+      arribo = env.now
+      print ('El proceso %s entro al sistema' % (i+1))
+      env.process(doProcess(i+1, env, cantM, cantI, instdCPU))
+      yield env.timeout(var)
+                
+def setMem(env, nombre, memoria):
+        global totalProcesos
+        print ('El proceso %s recibe memoria' % nombre)
+        with RamCola.request() as req:
+                if Ram.level <= 0:
+                    yield req
+        yield Ram.get(memoria) #ready con memoria asignada
+      
+def doProcess(nombre, env, memoria, instruct, instdCPU):
+        global TiempoTotal
+        #Valores[1:cantprocesos]
+        #ready
+        if instruct > 0:
+                with CPU.request() as req:
+                        yield req
+                        if instruct > 0:
+                                while instruct > 0:
+                                        if instruct > instdCPU:
+                                                instruct = instruct - instdCPU
+                                                wait = random.randint(1,2)
+                                                if wait == 1:
+                                                        print ('El proceso %s se encuentra reaizando operaciones de I/O' % nombre)
+                                                        yield env.timeout(1)
+                                                        env.process(doProcess(nombre, env, memoria, instruct, instdCPU))
+                                                if wait == 2:
+                                                        print ('El proceso %s se se mueve a estado Ready' % nombre)
+                                                        env.process(doProcess(nombre, env, memoria, instruct, instdCPU))                  
+                                        else:
+                                                TiempoTotal = env.now - arribo #Tiempo que se tarda el proceso en el sistema
+                                                tiempoT.append(TiempoTotal)
+                                                print ('Estado terminated: proceso %s\nEste tardo %s en ejecutarse\n' % (nombre, TiempoTotal))
+                                                intruct = 0
+                                                yield env.timeout(1)
+                                                yield Ram.put(memoria)
 
-    ## ---- new ---- ##
-    inicio_proceso = env.now
-    yield env.timeout(tiempo_proceso)
-    print "tiempo_proceso=",tiempo_proceso
-    print "Memoria requerida:",cantidad_memoria
-    yield MEMORIA_RAM.get(cantidad_memoria)
-    print "nivel de la memoria=",MEMORIA_RAM.level
-    print'Se admitio el proceso'
-    print'con un tiempo de:%f'% env.now
-    print'con una cantidad de memoria de:%f'% cantidad_memoria
-    print''
-    print''
-    ## ---- ready ----##
-    while instrucciones_completas<num_inst:
-    #for i in range(num_inst):
-        with CPU.request() as req:
-            yield req
-            if (num_inst-instrucciones_completas)>=limite:
-                realizar=limite
-            else:
-                realizar=num_inst-instrucciones_completas
-            env.timeout(realizar/limite)
-            instrucciones_completas=instrucciones_completas+realizar
-            print'Esta listo(ready)'
-            print'Instrucciones completadas:%f'%instrucciones_completas
-            print'Tiempo:%f'%env.now
-            print''
-            print''
-        W=waiting
-        
-        if W==1 and instrucciones_completas<num_inst:
-
-            with cola.request() as reqq:
-                yield reqq
-                yield env.timeout(1)
-                t_I_O=env.now()
-                print'Operaciones i/O'
-                print'tiempo de operaciones:%f'% t_I_O
-                print''
-                print''
-    ##---- exit ----##
-    tiempo_total = env.now - inicio_proceso
-    yield MEMORIA_RAM.put(cantidad_memoria)
-    print "Tiempo del proceso:%f"% tiempo_total
-    print 'memoria total:%f'%cantidad_memoria
-    print 'FINAL DEL PROCESO.'
-    print''
-    print''
-    print''
-    print''
-
-
-# Se inicia la simulacion
-waiting = random.randint(1,2)
-random.seed(SEMILLA)
 env = simpy.Environment()
-MEMORIA_RAM = simpy.Container(env, init=100, capacity=CANT_MEMORIA_RAM)
-CPU = simpy.Resource(env,capacity=1)
-cola= simpy.Resource(env,capacity=1)
-# Se inicia el proceso y se corre
-for i in range(NUMERO_PROCESOS):
-    tiempo_proceso = random.expovariate(1.0/10)
-    num_inst = random.randint(INST_MIN,INST_MAX)
-    cantidad_memoria = random.randint(MEM_MIN,MEM_MAX)
-    env.process(proceso(env,cantidad_memoria,tiempo_proceso,num_inst,waiting,I_C,limite))
-    env.run()
+Ram = simpy.Container(env, init = Ram_Size, capacity = Ram_Size)
+RamCola = simpy.Resource(env,capacity = 1)
+CPU = simpy.Resource(env,capacity = 5)
+
+# Setup and start the simulation
+print('Simulacion Procesos en CPU')
+
+# Start processes and run
+genProcesos = env.process(genProcess(env, Procesos, Intervalo, InstCPU)) #generan procesos
+env.run()
+
+#Variables para el calculo de la desviacion estandar
+suma = 0
+desvesta = 0
+sumaRAC = []
+
+for a in range (Procesos):
+   suma = tiempoT[a] + suma
+
+prom = suma / Procesos
+sumaTR = 0
+
+print ('\nTiempo Total: %s' % (suma))
+print ('\nTiempo promedio por proceso es de: %s' % (prom))
+
+for x in range (Procesos):
+        resta = tiempoT[x] - prom
+        restaAC = resta*resta
+        sumaRAC.append(restaAC)
+        sumaTR = sumaTR + sumaRAC[x]
+   
+desvesta = (sumaTR/Procesos)**0.5
+print ('Devesviacion estandar = %s' % (desvesta))
 
